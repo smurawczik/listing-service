@@ -1,6 +1,4 @@
-package org.listing;
-
-import java.time.LocalDate;
+package org.realestate;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
@@ -23,10 +21,10 @@ public class Application {
         if (event.getClass().getSimpleName().equals("StartupEvent")) {
             System.out.println("The application is starting... ");
 
-            MongoDatabase database = mongoClient.getDatabase("fruit");
+            MongoDatabase database = mongoClient.getDatabase("property");
 
             // Drop the collection containing the records
-            database.getCollection("fruit").drop();
+            database.getCollection("properties").drop();
         }
     }
 }

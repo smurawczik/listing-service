@@ -1,4 +1,4 @@
-package org.listing;
+package org.realestate;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
