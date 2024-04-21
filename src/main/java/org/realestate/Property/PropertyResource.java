@@ -2,9 +2,13 @@ package org.realestate.Property;
 
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jboss.logging.Logger;
+import org.realestate.PropertyType.PropertyType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -19,6 +23,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -34,7 +39,7 @@ public class PropertyResource {
 
   @GET
   public Uni<List<Property>> getAllProperties() {
-    return Property.listAll();
+    return Property.findAll().page(0, 20).list();
   }
 
   @POST
@@ -47,6 +52,46 @@ public class PropertyResource {
   @Path("/{id}")
   public Uni<Property> getPropertyById(@PathParam("id") String id) {
     return Property.findById(Long.valueOf(id));
+  }
+
+  @GET
+  @Path("/search")
+  public Uni<List<Property>> searchProperties(
+      @QueryParam("type") String type,
+      @QueryParam("minPrice") Double minPrice,
+      @QueryParam("maxPrice") Double maxPrice,
+      @QueryParam("bedrooms") Integer bedrooms,
+      @QueryParam("bathrooms") Integer bathrooms) {
+    StringBuilder queryBuilder = new StringBuilder("SELECT p FROM Property p WHERE 1=1");
+
+    Map<String, Object> params = new HashMap<>();
+
+    if (type != null && !type.isEmpty()) {
+      queryBuilder.append(" AND p.type = :type");
+      params.put("type", PropertyType.valueOf(type.toUpperCase()));
+    }
+    if (minPrice != null) {
+      queryBuilder.append(" AND p.price >= :minPrice");
+      params.put("minPrice", minPrice);
+    }
+    if (maxPrice != null) {
+      queryBuilder.append(" AND p.price <= :maxPrice");
+      params.put("maxPrice", maxPrice);
+    }
+    if (bedrooms != null) {
+      queryBuilder.append(" AND p.bedrooms = :bedrooms");
+      params.put("bedrooms", bedrooms);
+    }
+    if (bathrooms != null) {
+      queryBuilder.append(" AND p.bathrooms = :bathrooms");
+      params.put("bathrooms", bathrooms);
+    }
+
+    if (params.isEmpty()) {
+      return Uni.createFrom().item(Collections.emptyList());
+    }
+
+    return Property.find(queryBuilder.toString(), params).list();
   }
 
   @Provider
