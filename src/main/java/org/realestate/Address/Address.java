@@ -1,6 +1,10 @@
 package org.realestate.Address;
 
-public class Address {
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import jakarta.persistence.Entity;
+
+@Entity
+public class Address extends PanacheEntity {
   public String street;
   public String city;
   public String state;

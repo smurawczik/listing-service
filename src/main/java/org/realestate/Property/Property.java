@@ -1,12 +1,16 @@
 package org.realestate.Property;
 
-import org.bson.types.ObjectId;
+import org.realestate.Address.Address;
 
-import io.quarkus.mongodb.panache.common.MongoEntity;
+import io.quarkus.hibernate.reactive.panache.PanacheEntity;
+import jakarta.persistence.Cacheable;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
 
-@MongoEntity(collection = "properties")
-public class Property {
-  public ObjectId id;
+@Entity
+@Cacheable
+public class Property extends PanacheEntity {
   public String title;
   public String description;
   public double price;
@@ -14,7 +18,8 @@ public class Property {
   public int bathrooms;
   public double area; // in square feet
   public boolean isSold;
-
+  @OneToOne(cascade = CascadeType.ALL)
+  public Address address;
   // Constructors, getters, and setters
 
   public Property() {
@@ -22,7 +27,7 @@ public class Property {
   }
 
   public Property(String title, String description, double price, int bedrooms, int bathrooms,
-      double area, boolean isSold) {
+      double area, boolean isSold, Address address) {
     this.title = title;
     this.description = description;
     this.price = price;
@@ -30,5 +35,6 @@ public class Property {
     this.bathrooms = bathrooms;
     this.area = area;
     this.isSold = isSold;
+    this.address = address;
   }
 }
