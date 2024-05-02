@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
 import org.realestate.PropertyType.PropertyType;
@@ -21,6 +22,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
@@ -44,14 +46,42 @@ public class PropertyResource {
 
   @POST
   public Uni<Response> addProperty(Property property) {
+    property.setImages(
+        property.getImages().stream().map(image -> image.concat(property.getTitle())).collect(Collectors.toList()));
     return Panache.withTransaction(property::persist)
         .replaceWith(Response.ok(property).status(CREATED)::build);
   }
 
-  @GET
+  @PUT
   @Path("/{id}")
-  public Uni<Property> getPropertyById(@PathParam("id") String id) {
-    return Property.findById(Long.valueOf(id));
+  public Uni<Response> updateProperty(@PathParam("id") String id, Property updatedProperty) {
+    return Property.<Property>findById(Long.valueOf(id))
+        .onItem().ifNotNull().transformToUni(existingProperty -> {
+          if (updatedProperty.getTitle() != null) {
+            existingProperty.setTitle(updatedProperty.getTitle());
+          }
+          if (updatedProperty.getDescription() != null) {
+            existingProperty.setDescription(updatedProperty.getDescription());
+          }
+          if (Double.isFinite(updatedProperty.getPrice())) {
+            existingProperty.setPrice(updatedProperty.getPrice());
+          }
+          if (Double.isFinite(updatedProperty.getBedrooms())) {
+            existingProperty.setBedrooms(updatedProperty.getBedrooms());
+          }
+          if (Double.isFinite(updatedProperty.getBathrooms())) {
+            existingProperty.setBathrooms(updatedProperty.getBathrooms());
+          }
+          if (updatedProperty.getType() != null) {
+            existingProperty.setType(updatedProperty.getType());
+          }
+          if (updatedProperty.getImages() != null) {
+            existingProperty.setImages(updatedProperty.getImages());
+          }
+          return Panache.withTransaction(existingProperty::persist)
+              .replaceWith(Response.ok(existingProperty).build());
+        })
+        .onItem().ifNull().continueWith(Response.status(Response.Status.NOT_FOUND)::build);
   }
 
   @GET
